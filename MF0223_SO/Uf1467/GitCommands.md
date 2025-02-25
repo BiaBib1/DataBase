@@ -1,9 +1,9 @@
-Git
+Git Comandos
 
 git init
 
 git status para check
-git add nombre file para cargarne cada uno a la vez
+git add nombre file para cargar cada uno a la vez
 git add . subir todo
 
 git commit -m "el mess es muy importante"
@@ -16,3 +16,4 @@ git log para ver los commit que hiciste
 git remote -v origine
 
 git push per cargare en github
+git pull para descargar las modificaciones desde Github
