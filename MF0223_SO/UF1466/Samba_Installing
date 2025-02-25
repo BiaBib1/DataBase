@@ -1,0 +1,23 @@
+## Bash Ubuntu
+### Creating a shared folder between Ubuntu and Windows
+
+sudo mkdir path/foldername          #Creating a folder
+
+sudo chmod -R 777 path/foldername          #Set permissions
+
+sudo apt install samba          #Installing Samba
+
+sudo nano /etc/samba/smb.conf       #Set configuration Samba
+
+[foldername]
+path = path/foldername
+browseable = yes
+writable = yes                      #Config folder (copy&paste)
+read only = no
+guest ok = yes
+
+sudo smbpasswd –a usuario	+	password        #Set user & password
+
+sudo systemctl restart smbd         #Restart Samba
+
+sudo systemctl status smbd          #Check status Samba

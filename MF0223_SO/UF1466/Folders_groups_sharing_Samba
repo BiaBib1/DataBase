@@ -1,0 +1,56 @@
+## Bash Ubuntu
+### Creation of folders and user groups in a business simulation: Group1 Marketing with access only to the Marketing folder, Group2 Accounting with exclusive access to the Accounting folder, and Group3 Leader with unrestricted access to both folders
+
+Sudo addgroup       namegroup1
+Sudo addgroup       namegroup2          #Creating groups
+Sudo addgroup       namegroup3
+
+sudo adduser username1
+sudo adduser username2                  #Creating users
+sudo adduser username3
+
+sudo usermod –aG   groupname1   username1
+sudo usermod –aG   groupname2   username2          #Adding user to group
+sudo usermod –aG   groupname3   username3
+
+sudo mkdir /path/folder1         #Creating folders
+sudo mkdir /path/folder2
+
+sudo nano /etc/samba/smb.conf           #Set confing 
+
+[folder1]
+path = path/folder1
+browseable = yes
+writable = yes                      #Config folder1 (copy&paste)
+read only = no
+guest ok = yes
+valid user = @group1, @group3
+create mask = 0770
+directory mask = 0770
+
+[folder2]
+path = path/folder2
+browseable = yes
+writable = yes                      #Config folder2 (copy&paste)
+read only = no
+guest ok = yes
+valid user = @group2, @group3
+create mask = 0770
+directory mask = 0770
+
+sudo chown –R user1:group1 /path/folder1        #Set folders own
+sudo chown –R user2:group2 /path/folder2
+
+sudo chmod –R 770 /path/folder1             #Set permission
+sudo chmod –R 770 /path/folder2 
+
+sudo smbpasswd –a user1 + password
+sudo smbpasswd –a user2 + password          #Creating Samba's user
+sudo smbpasswd –a user3 + password
+
+ls   –l   /pathfolder                   #Checking config and permissions
+
+sudo systemctl restart smbd         #Restart Samba
+
+
+
