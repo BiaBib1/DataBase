@@ -1,0 +1,30 @@
+<script>
+
+    /* INICIALIZATION DEL PROGRAMA */
+    continuar = 'SI';
+    let total = 0;
+    let items = 0;
+    console.log('Introduce numeros para calcolar la media. Pulsa f para terminar ')
+    
+    /* SOLECIDUD Y ACUMULACION DE VALORES */
+    while (continuar == 'SI') {
+        //PIDE NUMERO
+        let numero = prompt('Introduce numero:'); //Pide numero
+        console.log(numero);
+        if (numero == 'f')
+        { continuar = 'NO'}
+        else{
+            total += parseInt(numero);
+            //total = total + numero;
+            items++;
+            //items = items + 1;
+        }
+    
+    }
+    
+    /* CALCULO DE LA MEDIA Y VISUALIZACION */
+    
+    let media = total / items;
+    console.log('La media es:' + media);
+    
+    </script>
