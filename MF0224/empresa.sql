@@ -69,10 +69,34 @@ WHERE id_cliente = (
 );
 */
 
+/*metodo inserito*/
+SELECT transacciones.id_transaccione, transacciones.fecha, transacciones.monto, clientes.id
+FROM transacciones, clientes
+WHERE id_cliente = (
+	SELECT clientes.id WHERE nombre = 'Ana Pérez'
+);
+
+
+/*Metodo proposto*/
+SELECT id_transaccione, fecha, monto
+FROM transacciones
+WHERE id_cliente = (
+	SELECT id FROM clientes WHERE nombre = 'Ana Pérez'
+);
+
+
+/*vedere 1 col metodo prof*/
 SELECT transacciones.id_transaccione, transacciones.fecha, transacciones.monto, clientes.id
 FROM transacciones, clientes
 WHERE transacciones.id_cliente = clientes.id AND clientes.nombre = 'Ana Pérez'
 
+/*per vedere tutto metodo prof*/
 SELECT *
-FROM transacciones, clientes
-WHERE transacciones.id_cliente = clientes.id
+FROM clientes, transacciones
+WHERE  clientes.id = transacciones.id_clienteS
+
+/*con join per vedere tutto*/
+SELECT *
+FROM transacciones
+JOIN clientes 
+WHERE id = id_cliente
