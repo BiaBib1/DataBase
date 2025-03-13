@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS `clientes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(50) NOT NULL DEFAULT '0',
   `correo` varchar(50) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- Volcando datos para la tabla empresa.clientes: ~3 rows (aproximadamente)
 INSERT INTO `clientes` (`id`, `nombre`, `correo`) VALUES
@@ -35,21 +35,19 @@ INSERT INTO `clientes` (`id`, `nombre`, `correo`) VALUES
 
 -- Volcando estructura para tabla empresa.transacciones
 CREATE TABLE IF NOT EXISTS `transacciones` (
-  `id_transicciones` int(11) NOT NULL AUTO_INCREMENT,
-  `id_cliente` int(11) NOT NULL,
+  `id_transaccione` int(11) NOT NULL AUTO_INCREMENT,
+  `id_cliente` int(11) NOT NULL DEFAULT 0,
   `fecha` date NOT NULL,
-  `monto` float(7,2) NOT NULL DEFAULT 0.00,
-  PRIMARY KEY (`id_transicciones`) USING BTREE,
-  KEY `FK_transacciones_clientes` (`id_cliente`),
-  CONSTRAINT `FK_transacciones_clientes` FOREIGN KEY (`id_cliente`) REFERENCES `clientes` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+  `monto` float NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id_transaccione`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=116 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 -- Volcando datos para la tabla empresa.transacciones: ~5 rows (aproximadamente)
-INSERT INTO `transacciones` (`id_transicciones`, `id_cliente`, `fecha`, `monto`) VALUES
-	(111, 1, '2024-02-01', 200.50),
+INSERT INTO `transacciones` (`id_transaccione`, `id_cliente`, `fecha`, `monto`) VALUES
+	(111, 1, '2024-02-01', 200.5),
 	(112, 1, '2024-02-05', 350.75),
-	(113, 2, '2024-02-02', 120.00),
-	(114, 3, '2024-02-07', 500.00),
+	(113, 2, '2024-02-02', 120),
+	(114, 3, '2024-02-07', 500),
 	(115, 2, '2024-02-10', 250.25);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
@@ -57,3 +55,24 @@ INSERT INTO `transacciones` (`id_transicciones`, `id_cliente`, `fecha`, `monto`)
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+
+SELECT transacciones.id_transaccione, transacciones.fecha, transacciones.monto, clientes.id
+FROM transacciones, clientes
+WHERE id_cliente = (
+	SELECT clientes.id WHERE nombre = 'Ana Pérez'
+);
+
+/*SELECT id_transaccione, fecha, monto
+FROM transacciones
+WHERE id_cliente = (
+	SELECT id FROM clientes WHERE nombre = 'Ana Pérez'
+);
+*/
+
+SELECT transacciones.id_transaccione, transacciones.fecha, transacciones.monto, clientes.id
+FROM transacciones, clientes
+WHERE transacciones.id_cliente = clientes.id AND clientes.nombre = 'Ana Pérez'
+
+SELECT *
+FROM transacciones, clientes
+WHERE transacciones.id_cliente = clientes.id
