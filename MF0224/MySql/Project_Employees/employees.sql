@@ -64,7 +64,7 @@ SELECT DISTINCT(last_name)
 FROM employees;
 
 /* JOIN */
-/* FUNZIONE CONCAT per concatenare colonne di ricerca. In questo modo si connettono le due tavole in modo semplice */
+/* FUNZIONE CONCAT per concatenare colonne di ricerca = concat as "nombre completo". In questo modo si connettono le due tavole in modo semplice */
 /* Le due query sono identiche ma con JOIN la seconda*/
 SELECT CONCAT(e.last_name, ' ', e.first_name), s.*
 FROM employees e, salaries s 
@@ -75,3 +75,26 @@ SELECT CONCAT(e.last_name, ',' , e.first_name), s.*
 FROM employees e
 JOIN salaries s ON e.emp_no = s.emp_no
 ORDER BY e.last_name DESC, e.first_name ASC;
+
+/* Dos JOINS */
+SELECT e.first_name, e.last_name, d.dept_name, de.* 
+FROM dept_emp de
+JOIN departments d ON  de.dept_no = d.dept_no
+JOIN employees e ON de.emp_no = e.emp_no
+ORDER BY d.dept_name
+
+/* Funciones SUM AVG(media) COUNT CONCAT e ROUND . */
+/*SUM(s.salary)/COUNT(*) = AVG(s.salary)*/
+SELECT e.emp_no, CONCAT(e.last_name, ', ' , e.first_name) as "nombre completo",  SUM(s.salary), ROUND(AVG(s.salary),2), COUNT(*)
+FROM employees e 
+JOIN salaries s ON e.emp_no = s.emp_no
+GROUP BY e.emp_no
+ORDER BY e.last_name DESC, e.first_name ASC
+
+/* ROUND y qualquiera otra funcion puede ser con AS alias que puede ser rellamado en order by*/
+SELECT CONCAT(e.first_name, ', ' , e.last_name) AS "Empleado", round(AVG(s.salary),2) AS promedio, t.title
+FROM employees e
+JOIN titles t ON e.emp_no = t.emp_no
+JOIN salaries s ON s.emp_no = e.emp_no
+GROUP BY t.title
+ORDER BY promedio DESC 
