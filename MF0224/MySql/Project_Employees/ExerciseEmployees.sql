@@ -80,7 +80,12 @@ ORDER BY birth_date asc
 
 /*Calcular la edad promedio de los empleados:*/
 
+SELECT AVG(DATEDIFF(CURDATE(), birth_date) / 365) AS eta_media
+FROM employees;
 
+
+SELECT AVG(TIMESTAMPDIFF(YEAR, birth_date, CURDATE())) AS eta_media
+FROM employees;
 
 /*Encontrar los empleados cuya fecha de contratación es en el mismo año que su fecha de nacimiento (ignorando el año de nacimiento):*/
 SELECT *
@@ -163,31 +168,61 @@ JOIN salaries s ON s.emp_no = e.emp_no
 GROUP BY t.title
 ORDER BY promedio DESC 
 
-/*Ejercicio 3*/
+/*Ejercicio 3!*/
 /*Buscar todos los empleados que hayan trabajado en al menos 2 departamentos. Mostrar su nombre, apellido y el número de departamentos en los que han trabajado Mostrar todos los resultados en orden ascendente.
 t.to_date ,*/
+SELECT e.first_name, e.last_name, COUNT(de.dept_no) AS num_departamentos
+FROM employees e
+JOIN dept_emp de ON e.emp_no = de.emp_no
+GROUP BY e.emp_no, e.first_name, e.last_name
+HAVING COUNT(de.dept_no) >= 2
+ORDER BY num_departamentos ASC
 
-/*Ejercicio 4*/
-.
+/*Ejercicio 4!*/
 /*Mostrar el nombre y apellidos del empleado mejor pagado.*/
+SELECT a.first_name, a.last_name, COUNT(f.film_id) AS Som
+FROM actor a
+JOIN film_actor fa ON a.actor_id = fa.actor_id
+JOIN film f ON fa.film_id = f.film_id
+GROUP BY fa.actor_id
+ORDER BY Som DESC 
+LIMIT 1
 
-/*Ejercicio 5*/
-
+/*Ejercicio 5!*/
 /*Obtener el nombre y apellido del segundo mejor empleado pagado.*/
-
+SELECT e.first_name, e.last_name, s.salary
+FROM employees e
+JOIN salaries s ON e.emp_no = s.emp_no
+ORDER BY s.salary DESC
+LIMIT 1 OFFSET 1
 
 /*http://www.forosdelweb.com/f100/limit-oracle-10-a-449714/ */
+/*LIMIT 1*/
 
-/*LIMIT 1;*/
-
-/*Ejercicio 6*/
+/*Ejercicio 6!*/
 /*Mostrar el mes y total contrataciones del mes con mayor número de contrataciones */
+SELECT MONTH(hire_date) AS mes, COUNT(*) AS total_contrataciones
+FROM employees
+GROUP BY mes
+ORDER BY total_contrataciones DESC
+LIMIT 1
 
-/*Ejercicio 7*/
+/*Ejercicio 7!*/
 /*Mostrar el departamento y la edad de contratación más baja*/
+SELECT d.dept_name, TIMESTAMPDIFF(YEAR, e.birth_date, e.hire_date) AS edad_contratacion
+FROM employees e
+JOIN dept_emp de ON e.emp_no = de.emp_no
+JOIN departments d ON de.dept_no = d.dept_no
+ORDER BY edad_contratacion ASC
+LIMIT 1
 
-/*Ejercicio 8*/
+/*Ejercicio 8!*/
 /*Mostrar el nombre y apellido y departamento de aquellos cuyo nombre no contenga vocales.*/
+SELECT e.first_name, e.last_name, d.dept_name
+FROM employees e
+JOIN dept_emp de ON e.emp_no = de.emp_no
+JOIN departments d ON de.dept_no = d.dept_no
+WHERE e.first_name NOT REGEXP '[AEIOUaeiou]'
 
 /*Ejercicio 9*/
 /*Contar el número de empleado de cada titulación */
@@ -231,3 +266,12 @@ FROM dept_emp de
 JOIN departments d ON de.dept_no = d.dept_no
 WHERE de.to_date = '9999-01-01'
 ORDER BY de.dept_no asc
+
+/*empleados por departamento actuales*/
+select e.*, de.from_date as "fecha inicio en el departamento",  d.dept_name, DATADIFF(CURDATE(), de.from_date) as "años en empresa"
+from dept_emp de
+join departments d on de.dept_no = d.dept_no
+join employees e on de.emp_no = e.emp_no
+where de.to_date = '9999-01-01'
+order by de.dept_no asc;
+
