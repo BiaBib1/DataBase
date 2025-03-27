@@ -6,7 +6,7 @@ select first_name from employees;
 select * from employees
 where gender = 'F';
 
-/* la funzione count(*) serve per conteggiare
+/* la funzione COUNT(*) serve per conteggiare
 "Numero de Female" è il messaggio che comare sulla colonna */
 select count(*) as "numero de Female"  from employees
 where gender = 'F';
@@ -43,6 +43,7 @@ SELECT MAX(emp_no), first_name AS "Maximo numero de empleado"
 FROM employees
 
 /* Conta con COUNT e raggruppa per GROUP BY, Importante la , dopo select */
+/*Il COUNTO RICHIEDE IL GROUP BY*/
 SELECT gender, COUNT(*) AS "Numero de empleados"
 FROM employees
 GROUP BY gender
@@ -98,3 +99,22 @@ JOIN titles t ON e.emp_no = t.emp_no
 JOIN salaries s ON s.emp_no = e.emp_no
 GROUP BY t.title
 ORDER BY promedio DESC 
+
+/*FUNZIONE DATEDIFF differenza fra le date inserite, con CURDATE, la data qui /365*/
+SELECT e.first_name, e.last_name, e.hire_date, de.from_date AS "fecha inicio",
+d.dept_name, round(DATEDIFF(CURDATE(), de.from_date) / 365, 0) AS "años en empresa"
+FROM dept_emp de
+JOIN departments d ON de.dept_no = d.dept_no
+JOIN employees e ON de.emp_no = e.emp_no
+WHERE de.to_date = '9999-01-01'
+order BY de.dept_no ASC 
+
+/*FUNZIONE UNIX_TIMESTAMP(CURDATE()) rimanda i secondi dal 01.01.1970. Las fechas hay que trasformarlas*/
+select e.*, de.from_date as "fecha inicio", 
+d.dept_name, DATEDIFF(CURRENT_DATE(), de.from_date )/365 as "años en empresa", 
+(UNIX_TIMESTAMP(CURRENT_DATE())- UNIX_TIMESTAMP( de.from_date )) as "segundos"
+from dept_emp as de
+join departments as d on de.dept_no = d.dept_no
+join employees as e on de.emp_no = e.emp_no
+where de.to_date = '9999-01-01'
+order by de.dept_no asc

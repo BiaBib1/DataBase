@@ -79,7 +79,6 @@ WHERE birth_date <= '1960-01-01'
 ORDER BY birth_date asc
 
 /*Calcular la edad promedio de los empleados:*/
-
 SELECT AVG(DATEDIFF(CURDATE(), birth_date) / 365) AS eta_media
 FROM employees;
 

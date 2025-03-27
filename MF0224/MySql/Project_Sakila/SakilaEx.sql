@@ -108,3 +108,4 @@ LIMIT 1
 /*Películas que nunca fueron rentadas. Encuentra todas las películas que nunca han sido alquiladas.*/
 /*Ingresos por mes. Obtén los ingresos totales por mes para analizar tendencias de ventas.*/
 /*Empleado con más rentas. Encuentra qué empleado ha procesado más alquileres.*/
+
