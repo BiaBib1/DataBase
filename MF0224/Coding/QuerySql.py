@@ -29,7 +29,7 @@ cursor.execute(sql)
 result = cursor.fetchall()
 for row in result:
     print(row)
-"""
+
 
 db = mariadb.connect(
     host="localhost",
@@ -51,4 +51,32 @@ sql = "SELECT t.TABLE_NAME, t.TABLE_TYPE, c.`COLUMN_NAME`, c.DATA_TYPE FROM `TAB
 cursor.execute(sql)
 result = cursor.fetchall()
 for row in result:
-    print(row)
+    print(row)"
+    """
+
+db = mariadb.connect(
+    host="localhost",
+    user="root",
+    password="0000",
+    database="information_schema"
+)
+
+def execute_query(connection, query):
+        cursor = connection.cursor()
+        cursor.execute(query)
+        return cursor.fetchall()
+
+
+q1 = "SELECT t.TABLE_NAME, t.TABLE_TYPE, c.`COLUMN_NAME`, c.DATA_TYPE FROM `TABLES` t JOIN COLUMNS c ON c.`TABLE_NAME`= t.`TABLE_NAME` WHERE t.table_schema = 'sakila';"
+r1 = execute_query(db, q1)
+if r1:
+    print("Resultados primera Query:")
+    for row in r1:
+        print(row)
+
+q2 = "SELECT k.TABLE_SCHEMA, k.`TABLE_NAME`, k.`COLUMN_NAME`, k.`CONSTRAINT_NAME` FROM KEY_COLUMN_USAGE k WHERE k.TABLE_SCHEMA = 'sakila'ORDER BY k.`CONSTRAINT_NAME` DESC"
+r2 = execute_query(db, q2)
+if r2:
+    print("\nResultados segunda Query:")
+    for row2 in r2:
+        print(row2)
