@@ -2,9 +2,10 @@ from openpyxl import Workbook
 import mariadb
 
 # Connect to the database information_schema
+# To establish the connection with MariaDB, enter your login credentials
 db = mariadb.connect(
     host="localhost",
-    user="root",
+    user="****",
     password="****",
     database="information_schema"
 )
