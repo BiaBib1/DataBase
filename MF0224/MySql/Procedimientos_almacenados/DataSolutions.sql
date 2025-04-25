@@ -54,9 +54,21 @@ GRANT USAGE ON *.* TO 'admin_venta'@'localhost';
 GRANT SELECT, INSERT, UPDATE  ON TABLE `datasolutionsdb`.`clientes` TO 'admin_venta'@'localhost';
 FLUSH PRIVILEGES;
 
+-- index
+CREATE INDEX idx_ciudad ON clientes (ciudad);
+CREATE INDEX idx_fecha_registro ON clientes (fecha_registro);
+CREATE INDEX idx_ciudad_fecha ON clientes (ciudad, fecha_registro);
+
 EXPLAIN SELECT * 
 FROM clientes 
 WHERE ciudad = 'Madrid' AND fecha_registro > '2024-01-01';
+
+-- Gestion de procesos
+SHOW PROCESSLIST;
+
+KILL <id_proceso>;
+
+
 
 -- PARTE 2 --
 
@@ -83,6 +95,93 @@ INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (10, 
 
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;
+
+-- Parte 3 --
+
+-- Creacion tabla de backup de clientes
+CREATE TABLE IF NOT EXISTS clientes_backup LIKE clientes;
+INSERT INTO clientes_backup SELECT * FROM clientes;
+
+-- Creacion file backup de clientes en sql
+SELECT * FROM clientes INTO OUTFILE 'C:/Users/jesus/Downloads/clientes_backup.sql'
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
+-- Con cmd Windows utilizar el comando dump para crear el backup
+mysqldump -u usuario -p DataSolutionsDB clientes > clientes_backup.sql
+
+-- creacion de un backup de clientes en formato csv
+SELECT * FROM clientes INTO OUTFILE 'C:/Users/jesus/Downloads/clientes_backup.csv'
+FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
+
+
+-- Procedimientos almacenados
+DELIMITER //
+
+CREATE PROCEDURE InsertarClienteSeguro(
+    IN nombre VARCHAR(255),
+    IN apellido VARCHAR(255),
+    IN ciudad VARCHAR(100),
+    IN fecha_registro DATE,
+    OUT mensaje VARCHAR(255)
+)
+BEGIN
+    -- Validamos que la fecha no sea futura
+    IF fecha_registro > CURDATE() THEN
+        SET mensaje = 'Error: Esta no es una maquina del tiempo';
+    ELSE
+        -- Si la fecha es válida, insertamos el cliente
+        INSERT INTO clientes (nombre, apellido, ciudad, fecha_registro)
+        VALUES (nombre, apellido, ciudad, fecha_registro);
+        SET mensaje = 'Cliente insertado correctamente';
+    END IF;
+END //
+
+DELIMITER ;
+
+-- Para lanzar el procedimiento hay que ejecutar
+CALL InsertarClienteSeguro('Juan', 'Pérez', 'Madrid', '2025-05-10', @mensaje);
+SELECT @mensaje; -- Verifica si hubo error o éxito
+
+
+-- Disparador (Trigger)  registre cualquier modificación realizada en la tabla clientes en una tabla de auditoría llamada log_clientes
+-- Creacion de la tabla log_clientes
+CREATE TABLE IF NOT EXISTS log_clientes (
+    id INTEGER AUTO_INCREMENT PRIMARY KEY,
+    fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    usuario TEXT,
+    operacion TEXT,
+    datos_antiguos TEXT,
+    datos_nuevos TEXT
+);
+
+
+-- trigger
+DELIMITER //
+CREATE TRIGGER trg_audit_clientes
+AFTER UPDATE ON clientes
+FOR EACH ROW
+BEGIN
+    INSERT INTO log_clientes (
+		fecha_modificacion, 
+		usuario, 
+		operacion, 
+		datos_antiguos, 
+		datos_nuevos
+	)
+    VALUES (
+        CURRENT_TIMESTAMP,
+        CURRENT_USER(),
+        'UPDATE',
+        NEW.id, 
+		NEW.nombre, 
+		NEW.apellido, 
+		NEW.ciudad, 
+		NEW.fecha_registro
+    );
+END;
+//
+DELIMITER ;
+
+
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
