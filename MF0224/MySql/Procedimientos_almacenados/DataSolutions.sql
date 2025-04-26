@@ -187,6 +187,11 @@ BEGIN
 END//
 DELIMITER ;
 
+-- Para probar el trigger, actualizamos un cliente
+UPDATE clientes SET ciudad = 'Modena' WHERE id = 1;
+
+--PARTE 4 --
+
 /* quasi
 DELIMITER //
 CREATE TRIGGER tr_auditoria_clientes
