@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS log_clientes (
 
 -- trigger
 DELIMITER //
-CREATE TRIGGER tr_auditoria_clientes
+CREATE TRIGGER tr_clientes
 AFTER UPDATE ON clientes
 FOR EACH ROW
 BEGIN
