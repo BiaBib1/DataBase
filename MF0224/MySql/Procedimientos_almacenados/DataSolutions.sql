@@ -145,17 +145,70 @@ SELECT @mensaje; -- Verifica si hubo error o éxito
 -- Disparador (Trigger)  registre cualquier modificación realizada en la tabla clientes en una tabla de auditoría llamada log_clientes
 -- Creacion de la tabla log_clientes
 CREATE TABLE IF NOT EXISTS log_clientes (
-    id INTEGER AUTO_INCREMENT PRIMARY KEY,
-    fecha_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    usuario TEXT,
-    operacion TEXT,
-    datos_antiguos TEXT,
-    datos_nuevos TEXT
-);
+    id INT NOT NULL AUTO_INCREMENT,
+    fecha_modificacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    usuario VARCHAR(50) NULL,
+    operacion VARCHAR(20) NULL,
+    datos_antiguos VARCHAR(255) NULL,
+    datos_nuevos VARCHAR(255) NULL,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 -- trigger
 DELIMITER //
+CREATE TRIGGER tr_auditoria_clientes
+AFTER UPDATE ON clientes
+FOR EACH ROW
+BEGIN
+    -- Verifica se cambia il nome
+    IF NEW.nombre != OLD.nombre THEN
+        INSERT INTO log_clientes (usuario, operacion, datos_antiguos, datos_nuevos)
+        VALUES (CURRENT_USER(), 'UPDATE', OLD.nombre, NEW.nombre);
+    END IF;
+    
+    -- Verifica se cambia il cognome
+    IF NEW.apellido != OLD.apellido THEN
+        INSERT INTO log_clientes (usuario, operacion, datos_antiguos, datos_nuevos)
+        VALUES (CURRENT_USER(), 'UPDATE', OLD.apellido, NEW.apellido);
+    END IF;
+    
+	 -- Verifica se cambia la città
+    IF NEW.ciudad != OLD.ciudad THEN
+        INSERT INTO log_clientes (usuario, operacion, datos_antiguos, datos_nuevos)
+        VALUES (CURRENT_USER(), 'UPDATE', OLD.ciudad, NEW.ciudad);
+    END IF;
+    
+    -- Verifica se cambia la fecha_registro
+    IF NEW.fecha_registro != OLD.fecha_registro THEN
+        INSERT INTO log_clientes (usuario, operacion, datos_antiguos, datos_nuevos)
+        VALUES (CURRENT_USER(), 'UPDATE', OLD.fecha_registro, NEW.fecha_registro);
+    END IF;
+END//
+DELIMITER ;
+
+/* quasi
+DELIMITER //
+CREATE TRIGGER tr_auditoria_clientes
+AFTER UPDATE ON clientes
+FOR EACH ROW
+BEGIN
+    INSERT INTO log_clientes (
+        usuario,
+        operacion,
+        datos_antiguos,
+        datos_nuevos
+    ) VALUES (
+        CURRENT_USER(),
+        'UPDATE',
+        -- Solo los campos clave
+        OLD.nombre,
+        NEW.nombre
+    );
+END//
+DELIMITER ;
+*/
+/*DELIMITER //
 CREATE TRIGGER trg_audit_clientes
 AFTER UPDATE ON clientes
 FOR EACH ROW
@@ -180,7 +233,7 @@ BEGIN
 END;
 //
 DELIMITER ;
-
+*/
 
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
