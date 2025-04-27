@@ -16,6 +16,10 @@
 
 -- PARTE 1 --
 
+/* PARTE 1: Creación y Configuración de la Base de Datos (MySQL) */
+/* Si procederà con la creazione di un database che chiameremo DataSolutionDB con MySQL e, al suo interno, una tabella clientes.
+Si seguirà stabilendo i campi della tabella con i rispettivi valori e constraint, defindendo, per esempio, il campo 'id' come intero,
+autoincrementabile e come chiave primaria.  */
 -- Volcando estructura de base de datos para datasolutionsdb
 CREATE DATABASE IF NOT EXISTS `datasolutionsdb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
 USE `datasolutionsdb`;
@@ -30,6 +34,7 @@ CREATE TABLE IF NOT EXISTS `clientes` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+/* Si procede inserendo i dati nella tavola, con i campi compilati.*/
 -- Volcando datos para la tabla datasolutionsdb.clientes: ~10 rows (aproximadamente)
 INSERT INTO `clientes` (`id`, `nombre`, `apellido`, `ciudad`, `fecha_registro`) VALUES
 	(1, 'Ana', 'Garcia', 'Madrid', '2024-02-02'),
@@ -43,20 +48,33 @@ INSERT INTO `clientes` (`id`, `nombre`, `apellido`, `ciudad`, `fecha_registro`) 
 	(9, 'Idoia', 'Gurmendi', 'Donostia', '2025-03-22'),
 	(10, 'Uxua', 'Arego', 'Pamplona', '2022-11-03');
 
+--2. Creacion de Usuarios:
+/* Di seguito la creazione di due utenti coi rispettivi permessi, coi comandi CREATE USER e GRANT:
+            il primo 'consultor' con permessi di lettura su tutte le tavole del database
+            il secondo 'admin_venta' con permessi di lettura, insercion u actualizacion sulla tavola clientes
+FLUSH PRIVILEGES serve per aggiornare i permessi degli utenti*/
 -- Creacion de los usuarios con diferentes provilegios
 CREATE USER 'consultor'@'localhost' IDENTIFIED BY '';
 GRANT USAGE ON *.* TO 'consultor'@'localhost';
 GRANT SELECT  ON `datasolutionsdb`.* TO 'consultor'@'localhost';
 FLUSH PRIVILEGES;
-
+            
 CREATE USER 'admin_venta'@'localhost' IDENTIFIED BY '';
 GRANT USAGE ON *.* TO 'admin_venta'@'localhost';
 GRANT SELECT, INSERT, UPDATE  ON TABLE `datasolutionsdb`.`clientes` TO 'admin_venta'@'localhost';
 FLUSH PRIVILEGES;
 
--- index
-CREATE INDEX idx_ciudad ON clientes (ciudad);
-CREATE INDEX idx_fecha_registro ON clientes (fecha_registro);
+-- 3. OPTIMIZACION DE CONSULTAS:
+/* Creare degli indici è raccomandabile per ottimizzare le query, in particolare quando si eseguono ricerche su colonne specifiche.
+*/
+
+SELECT * 
+FROM clientes 
+WHERE ciudad = 'Madrid' AND fecha_registro > '2024-01-01';
+/*In questo caso, creiamo indici col comando CREATE INDEX definendolo idx_ciudad o idx_fecha ON tabella 'clientes'
+per le colonne 'ciudad' e 'fecha_registro'
+Qui una versione ottimizzata.*/
+
 CREATE INDEX idx_ciudad_fecha ON clientes (ciudad, fecha_registro);
 
 EXPLAIN SELECT * 
@@ -191,6 +209,45 @@ DELIMITER ;
 UPDATE clientes SET ciudad = 'Modena' WHERE id = 1;
 
 --PARTE 4 --
+
+@echo Inizio BackUp
+
+set MYSQL_BIN="C:\Program Files\MariaDB 5.5\bin\mysqldump.exe"
+set DB_USER=root
+set DB_PASS=0000
+set DB_NAME=DataSolutionsDB
+set BACKUP_DIR="C:\BackupMySQL"
+
+:: Crea cartella se non esiste
+if not exist %BACKUP_DIR% mkdir %BACKUP_DIR%
+
+:: Genera nome file con data
+set BACKUP_FILE=%DB_NAME%_%DATE:/=-%.sql
+
+:: Esegui backup
+%MYSQL_BIN% -u%DB_USER% -p%DB_PASS% %DB_NAME% > %BACKUP_DIR%\%BACKUP_FILE%
+
+echo Backup completato in %BACKUP_DIR%\%BACKUP_FILE%
+pause
+
+/*Pianificazione automatica con Task Scheduler:
+Apri:
+
+Cerca "Utilità di pianificazione" nel menu Start
+
+Crea task:
+
+Azione → "Crea attività di base"
+
+Nome: "Backup MySQL giornaliero"
+
+Trigger: Quotidiano (es. alle 23:00)
+
+Azione: "Avvia un programma"
+
+Programma: C:\percorso\backup_mysql.bat
+*/
+
 
 /* quasi
 DELIMITER //
