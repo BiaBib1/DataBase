@@ -16,10 +16,11 @@
 
 -- PARTE 1 --
 
-/* PARTE 1: Creación y Configuración de la Base de Datos (MySQL) */
-/* Si procederà con la creazione di un database che chiameremo DataSolutionDB con MySQL e, al suo interno, una tabella clientes.
-Si seguirà stabilendo i campi della tabella con i rispettivi valori e constraint, defindendo, per esempio, il campo 'id' come intero,
-autoincrementabile e come chiave primaria.  */
+-- 1. Creación y Configuración de la Base de Datos (MySQL) --
+/* Se procederá con la creación de una base de datos que llamaremos DataSolutionDB con MySQL y, dentro de ella, una tabla clientes.
+Se continuará estableciendo los campos de la tabla con sus respectivos valores y restricciones, 
+definiendo, por ejemplo, el campo 'id' como entero, autoincrementable y como clave primaria.  */
+
 -- Volcando estructura de base de datos para datasolutionsdb
 CREATE DATABASE IF NOT EXISTS `datasolutionsdb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
 USE `datasolutionsdb`;
@@ -34,7 +35,8 @@ CREATE TABLE IF NOT EXISTS `clientes` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/* Si procede inserendo i dati nella tavola, con i campi compilati.*/
+/* Se procede a insertar los datos en la tabla, con los campos completados. */
+
 -- Volcando datos para la tabla datasolutionsdb.clientes: ~10 rows (aproximadamente)
 INSERT INTO `clientes` (`id`, `nombre`, `apellido`, `ciudad`, `fecha_registro`) VALUES
 	(1, 'Ana', 'Garcia', 'Madrid', '2024-02-02'),
@@ -48,11 +50,12 @@ INSERT INTO `clientes` (`id`, `nombre`, `apellido`, `ciudad`, `fecha_registro`) 
 	(9, 'Idoia', 'Gurmendi', 'Donostia', '2025-03-22'),
 	(10, 'Uxua', 'Arego', 'Pamplona', '2022-11-03');
 
---2. Creacion de Usuarios:
-/* Di seguito la creazione di due utenti coi rispettivi permessi, coi comandi CREATE USER e GRANT:
-            il primo 'consultor' con permessi di lettura su tutte le tavole del database
-            il secondo 'admin_venta' con permessi di lettura, insercion u actualizacion sulla tavola clientes
-FLUSH PRIVILEGES serve per aggiornare i permessi degli utenti*/
+-- 2. Creacion de Usuarios: --
+/* A continuación, la creación de dos usuarios con sus respectivos permisos, utilizando los comandos CREATE USER y GRANT:
+        el primero, 'consultor', con permisos de lectura sobre todas las tablas de la base de datos;
+        el segundo, 'admin_venta', con permisos de lectura, inserción y actualización sobre la tabla clientes.
+FLUSH PRIVILEGES se utiliza para actualizar los permisos de los usuarios.*/
+
 -- Creacion de los usuarios con diferentes provilegios
 CREATE USER 'consultor'@'localhost' IDENTIFIED BY '';
 GRANT USAGE ON *.* TO 'consultor'@'localhost';
@@ -64,28 +67,31 @@ GRANT USAGE ON *.* TO 'admin_venta'@'localhost';
 GRANT SELECT, INSERT, UPDATE  ON TABLE `datasolutionsdb`.`clientes` TO 'admin_venta'@'localhost';
 FLUSH PRIVILEGES;
 
--- 3. OPTIMIZACION DE CONSULTAS:
-/* Creare degli indici è raccomandabile per ottimizzare le query, in particolare quando si eseguono ricerche su colonne specifiche.
-*/
-
+-- 3. OPTIMIZACION DE CONSULTAS: --
+/*Crear índices es recomendable para optimizar las consultas, especialmente cuando se realizan búsquedas sobre columnas específicas, como en este caso. */
 SELECT * 
 FROM clientes 
 WHERE ciudad = 'Madrid' AND fecha_registro > '2024-01-01';
-/*In questo caso, creiamo indici col comando CREATE INDEX definendolo idx_ciudad o idx_fecha ON tabella 'clientes'
-per le colonne 'ciudad' e 'fecha_registro'
-Qui una versione ottimizzata.*/
+
+/* En este caso, creamos índices con el comando CREATE INDEX, definiéndolos como idx_ciudad o idx_fecha en la tabla clientes
+para las columnas ciudad y fecha_registro.
+Aquí una versión optimizada. */
 
 CREATE INDEX idx_ciudad_fecha ON clientes (ciudad, fecha_registro);
+
+/* Para optimizar aún más la consulta, podemos usar EXPLAIN para analizar el plan de ejecución de la consulta.
+EXPLAIN proporciona información sobre cómo la base de datos ejecutará la consulta, incluidos los índices utilizados y el número de filas examinadas.*/
 
 EXPLAIN SELECT * 
 FROM clientes 
 WHERE ciudad = 'Madrid' AND fecha_registro > '2024-01-01';
 
+/* Con SHOW PROCESSLIST podemos visualizar los procesos en curso
+y con el comando KILL, indicando su ID, eliminarlos. */
 -- Gestion de procesos
 SHOW PROCESSLIST;
 
 KILL <id_proceso>;
-
 
 
 -- PARTE 2 --
@@ -133,22 +139,24 @@ VALUES (10, 'Uxua', 'Arego', 'Pamplona', '2022-11-03');
 
 -- Parte 3: Automatización de Tareas y Seguridad --
 
+-- 1. Copias de seguridad --
 /*En esta parte se crea una tabla de backup de clientes, con la misma estructura que la tabla clientes,
-y se inserta una copia de los datos.
-Ademas tramite el comando MYSQLDUMP se crean copias de seguridad de la tabla clientes en diferentes formatos (sql, csv)*/
--- Creacion tabla de backup de clientes
+y se inserta una copia de los datos.*/
 
+-- Creacion tabla de backup de clientes
 CREATE TABLE IF NOT EXISTS clientes_backup LIKE clientes;
 INSERT INTO clientes_backup SELECT * FROM clientes;
 
-
--- Con cmd Windows utilizar el comando dump para crear el backup
+/* Ademas tramite el comando MYSQLDUMP en el CMD de Windows se pueden crear copias de seguridad de la tabla clientes
+en diferentes formatos (sql, csv) indicando el usuario, el nombre de la base datos, la tabla, la ruta de la carpeta
+y el formado elegido*/
+    -- modificar el usuario y el nombre del usuario en la ruta
 mysqldump -u usuario -p DataSolutionsDB clientes > C:/Users/NombreUsuario/Downloads/clientes_backup.sql
 
--- Aqui el codigo de un fichero .bat para crear un backup automatico de la tabla clientes en formato sql
+/* Aqui el codigo de un fichero .bat para crear un backup automatico de la tabla clientes en formato sql*/
     -- Modificar User, password y UserName en Path
 @echo off
-:: === Configura i tuoi dati qui ===
+:: === Configura tus datos aquí ===
 set MYSQL_USER=User
 set MYSQL_PASSWORD=****
 set MYSQL_DATABASE=DataSolutionsDB
@@ -156,25 +164,25 @@ set MYSQL_TABLE=clientes
 set BACKUP_PATH=C:\Users\UserName\Downloads\clientes_backup.sql
 set MYSQL_BIN_PATH="C:\Program Files\MariaDB 11.6\bin"
 
-:: === Esegui il dump della tabella ===
+:: === Realiza el volcado de la tabla ===
 %MYSQL_BIN_PATH%\mysqldump.exe -u %MYSQL_USER% -p%MYSQL_PASSWORD% %MYSQL_DATABASE% %MYSQL_TABLE% > "%BACKUP_PATH%"
 
 echo.
-echo Backup completato! Il file si trova in Downloads.
-pause
+echo Backup completado! El file si encuentra in Downloads.
 
+pause
 
 -- Creacion de un backup de clientes en formato csv en la carpeta C:\Program Files\MariaDB 11.6\data\datasolutionsdb
 SELECT * FROM clientes INTO OUTFILE 'clientes_backup.csv'
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
 
 
--- Procedimientos almacenados
-/*En esta parte se crea un procedimiento almacenado que valide la integridad de los datos al insertar un nuevo cliente en la tabla clientes de MySQL.
- Este procedimiento verifica que el campo fecha_registro no sea una fecha futura.
- */
-DELIMITER //
+-- 2. Procedimientos almacenados --
+/* En esta parte se crea un procedimiento almacenado que valide la integridad de los datos al insertar un nuevo cliente en la tabla clientes de MySQL.
+ Este procedimiento verifica que el campo fecha_registro no sea una fecha futura.*/
 
+-- Creacion del procedimiento almacenado
+DELIMITER //
 CREATE PROCEDURE InsertarClienteSeguro(
     IN nombre VARCHAR(255),
     IN apellido VARCHAR(255),
@@ -193,7 +201,6 @@ BEGIN
         SET mensaje = 'Cliente insertado correctamente';
     END IF;
 END //
-
 DELIMITER ;
 
 -- Para lanzar el procedimiento hay que ejecutar
@@ -201,7 +208,13 @@ CALL InsertarClienteSeguro('Juan', 'Pérez', 'Madrid', '2025-05-10', @mensaje);
 SELECT @mensaje; -- Verifica si hubo error o éxito
 
 
--- Disparador (Trigger)  registre cualquier modificación realizada en la tabla clientes en una tabla de auditoría llamada log_clientes
+-- 3. Disparador (Trigger)  --
+/*I trigger sono procedure automatiche che vengono eseguite dal database in risposta a eventi specifici. 
+Le operazioni che possono attivare un trigger includono INSERT, UPDATE o DELETE e possono essere eseguite prima o dopo l'evento (BEFORE o AFTER).
+In questo caso, creiamo un trigger che si attiva AFTER un'operazione di UPDATE sulla tabella clientes.
+I trigger è associato a una tabella e viene eseguito automaticamente quando si verifica l'evento.
+Qui creiamo una tabella di audit chiamata log_clientes per registrare le modifiche apportate (datos_nuevos).*/
+
 -- Creacion de la tabla log_clientes
 CREATE TABLE IF NOT EXISTS log_clientes (
     id INT NOT NULL AUTO_INCREMENT,
@@ -213,8 +226,7 @@ CREATE TABLE IF NOT EXISTS log_clientes (
     PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
--- trigger
+-- Creacion del trigger
 DELIMITER //
 CREATE TRIGGER tr_clientes
 AFTER UPDATE ON clientes
@@ -250,44 +262,73 @@ DELIMITER ;
 UPDATE clientes SET ciudad = 'Modena' WHERE id = 1;
 
 --PARTE 4: Planificación de Tareas --
-/*per piancificare una copia di sicurezza automatica creiamo un file.bat utilizzando mysqldump  */
-@echo Inizio BackUp
+
+-- 1. Planificación de Copias de Seguridad:--
+/* per piancificare una copia di sicurezza automatica creiamo un file.bat utilizzando mysqldump,
+all'interno del quale creiamo la connessione col il database, una cartella per il file che si genererà
+e il file stesso in .sql */
+
+    -- Modificare l'utente e la password
+@echo Starting BackUp
 
 set MYSQL_BIN="C:\Program Files\MariaDB 5.5\bin\mysqldump.exe"
-set DB_USER=root
-set DB_PASS=0000
+set DB_USER=Usuario
+set DB_PASS=****
 set DB_NAME=DataSolutionsDB
 set BACKUP_DIR="C:\BackupMySQL"
 
-:: Crea cartella se non esiste
+:: Crea carpeta si no existe
 if not exist %BACKUP_DIR% mkdir %BACKUP_DIR%
 
-:: Genera nome file con data
+:: Genera nombre file con data
 set BACKUP_FILE=%DB_NAME%_%DATE:/=-%.sql
 
-:: Esegui backup
+:: Ejecuta backup
 %MYSQL_BIN% -u%DB_USER% -p%DB_PASS% %DB_NAME% > %BACKUP_DIR%\%BACKUP_FILE%
 
-echo Backup completato in %BACKUP_DIR%\%BACKUP_FILE%
+echo Backup completado en %BACKUP_DIR%\%BACKUP_FILE%
 pause
 
-/*Pianificazione automatica con Task Scheduler:
-Apri:
+/*Pianificazione automatica con Task Scheduler di Windows:
 
 Cerca "Utilità di pianificazione" nel menu Start
-
 Crea task:
-
 Azione → "Crea attività di base"
-
 Nome: "Backup MySQL giornaliero"
-
 Trigger: Quotidiano (es. alle 23:00)
-
 Azione: "Avvia un programma"
-
 Programma: C:\percorso\backup_mysql.bat
 */
+
+-- 2. Monitoreo del Rendimiento: --
+
+/*dbeaver
+Performance Dashboard:
+Menu Database > Performance > Dashboard mostra in tempo reale:
+    Query attive
+    Utilizzo CPU/RAM
+    Latenza delle query
+Explain Plan:
+Click destro su una query > Explain Execution Plan per analizzare l'uso degli indici.*/
+
+/*HeidiSQL
+Session Manager:
+Menu Tools > Session Manager elenca tutte le connessioni attive con:
+    Tempo di esecuzione
+    Query in corso
+    Stato (Lock, Sending data, etc.)*/
+
+
+SHOW FULL PROCESSLIST;
+/*Mostra tutte le connessioni attive e le query in esecuzione.*/
+SHOW STATUS LIKE 'Threads_connected';
+
+/*Mostra le query in esecuzione da più di 10 secondi.*/
+SELECT * FROM information_schema.processlist 
+WHERE COMMAND != 'Sleep' AND TIME > 10
+ORDER BY TIME DESC;
+
+
 
 
 /* quasi
