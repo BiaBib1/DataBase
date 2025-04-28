@@ -141,18 +141,38 @@ Ademas tramite el comando MYSQLDUMP se crean copias de seguridad de la tabla cli
 CREATE TABLE IF NOT EXISTS clientes_backup LIKE clientes;
 INSERT INTO clientes_backup SELECT * FROM clientes;
 
--- Creacion file backup de clientes en sql
-SELECT * FROM clientes INTO OUTFILE 'C:/Users/jesus/Downloads/clientes_backup.sql'
-FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
--- Con cmd Windows utilizar el comando dump para crear el backup
-mysqldump -u usuario -p DataSolutionsDB clientes > clientes_backup.sql
 
--- creacion de un backup de clientes en formato csv
-SELECT * FROM clientes INTO OUTFILE 'C:/Users/jesus/Downloads/clientes_backup.csv'
+-- Con cmd Windows utilizar el comando dump para crear el backup
+mysqldump -u usuario -p DataSolutionsDB clientes > C:/Users/NombreUsuario/Downloads/clientes_backup.sql
+
+-- Aqui el codigo de un fichero .bat para crear un backup automatico de la tabla clientes en formato sql
+    -- Modificar User, password y UserName en Path
+@echo off
+:: === Configura i tuoi dati qui ===
+set MYSQL_USER=User
+set MYSQL_PASSWORD=****
+set MYSQL_DATABASE=DataSolutionsDB
+set MYSQL_TABLE=clientes
+set BACKUP_PATH=C:\Users\UserName\Downloads\clientes_backup.sql
+set MYSQL_BIN_PATH="C:\Program Files\MariaDB 11.6\bin"
+
+:: === Esegui il dump della tabella ===
+%MYSQL_BIN_PATH%\mysqldump.exe -u %MYSQL_USER% -p%MYSQL_PASSWORD% %MYSQL_DATABASE% %MYSQL_TABLE% > "%BACKUP_PATH%"
+
+echo.
+echo Backup completato! Il file si trova in Downloads.
+pause
+
+
+-- Creacion de un backup de clientes en formato csv en la carpeta C:\Program Files\MariaDB 11.6\data\datasolutionsdb
+SELECT * FROM clientes INTO OUTFILE 'clientes_backup.csv'
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
 
 
 -- Procedimientos almacenados
+/*En esta parte se crea un procedimiento almacenado que valide la integridad de los datos al insertar un nuevo cliente en la tabla clientes de MySQL.
+ Este procedimiento verifica que el campo fecha_registro no sea una fecha futura.
+ */
 DELIMITER //
 
 CREATE PROCEDURE InsertarClienteSeguro(
@@ -229,8 +249,8 @@ DELIMITER ;
 -- Para probar el trigger, actualizamos un cliente
 UPDATE clientes SET ciudad = 'Modena' WHERE id = 1;
 
---PARTE 4 --
-
+--PARTE 4: Planificación de Tareas --
+/*per piancificare una copia di sicurezza automatica creiamo un file.bat utilizzando mysqldump  */
 @echo Inizio BackUp
 
 set MYSQL_BIN="C:\Program Files\MariaDB 5.5\bin\mysqldump.exe"
