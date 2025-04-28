@@ -89,34 +89,55 @@ KILL <id_proceso>;
 
 
 -- PARTE 2 --
+/* Creacion de una base de datos clientes.db en Sqlite3, con la tabla clientes, con los mismos campos de la tabla clientes de MySQL.
+Con el orden INSERt INTO se insertan los mismos datos. */
 
--- Archivo generado con SQLiteStudio v3.4.17 el ju. abr. 24 14:08:36 2025
---
--- Codificaciòn de texto usada: System
---
-PRAGMA foreign_keys = off;
-BEGIN TRANSACTION;
+-- Volcando estructura de base de datos para clientes.db
+CREATE DATABASE IF NOT EXISTS clientes.db;
+USE clientes.db;
 
 -- Tabla: clientes
-CREATE TABLE IF NOT EXISTS clientes (id INTEGER, nombre TEXT, apellido TEXT, ciudad TEXT, fecha_registro NUMERIC, PRIMARY KEY (id));
+CREATE TABLE IF NOT EXISTS clientes (
+    id             INTEGER,
+    nombre         TEXT,
+    apellido       TEXT,
+    ciudad         TEXT,
+    fecha_registro NUMERIC,
+    PRIMARY KEY (
+        id
+    )
+);
 
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (1, 'Ana', 'Garcia', 'Madrid', '2024-02-02');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (2, 'Maria', 'Lopez', 'Tarragona', '2025-03-06');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (3, 'Gorka', 'Martinez', 'Valencia', '2022-10-18');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (4, 'David', 'Perez', 'Barcelona', '2020-11-19');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (5, 'Julia', 'Maion', 'Valladolid', '2021-09-26');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (6, 'Esteban', 'Soresina', 'Sevilla', '2022-04-24');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (7, 'Francisco', 'Arko', 'Granada', '2023-06-11');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (8, 'Lorea', 'Nazabal', 'Bilbao', '2024-01-02');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (9, 'Idoia', 'Gurmendi', 'Donostia', '2025-03-22');
-INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) VALUES (10, 'Uxua', 'Arego', 'Pamplona', '2022-11-03');
+-- Insercion de datos en la tabla clientes
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (1, 'Ana', 'Garcia', 'Madrid', '2024-02-02');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (2, 'Maria', 'Lopez', 'Tarragona', '2025-03-06');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (3, 'Gorka', 'Martinez', 'Valencia', '2022-10-18');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (4, 'David', 'Perez', 'Barcelona', '2020-11-19');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (5, 'Julia', 'Maion', 'Valladolid', '2021-09-26');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (6, 'Esteban', 'Soresina', 'Sevilla', '2022-04-24');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (7, 'Francisco', 'Arko', 'Granada', '2023-06-11');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (8, 'Lorea', 'Nazabal', 'Bilbao', '2024-01-02');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (9, 'Idoia', 'Gurmendi', 'Donostia', '2025-03-22');
+INSERT INTO clientes (id, nombre, apellido, ciudad, fecha_registro) 
+VALUES (10, 'Uxua', 'Arego', 'Pamplona', '2022-11-03');
 
-COMMIT TRANSACTION;
-PRAGMA foreign_keys = on;
 
--- Parte 3 --
+-- Parte 3: Automatización de Tareas y Seguridad --
 
+/*En esta parte se crea una tabla de backup de clientes, con la misma estructura que la tabla clientes,
+y se inserta una copia de los datos.
+Ademas tramite el comando MYSQLDUMP se crean copias de seguridad de la tabla clientes en diferentes formatos (sql, csv)*/
 -- Creacion tabla de backup de clientes
+
 CREATE TABLE IF NOT EXISTS clientes_backup LIKE clientes;
 INSERT INTO clientes_backup SELECT * FROM clientes;
 
