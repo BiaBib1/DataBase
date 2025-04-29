@@ -209,11 +209,11 @@ SELECT @mensaje; -- Verifica si hubo error o éxito
 
 
 -- 3. Disparador (Trigger)  --
-/*I trigger sono procedure automatiche che vengono eseguite dal database in risposta a eventi specifici. 
-Le operazioni che possono attivare un trigger includono INSERT, UPDATE o DELETE e possono essere eseguite prima o dopo l'evento (BEFORE o AFTER).
-In questo caso, creiamo un trigger che si attiva AFTER un'operazione di UPDATE sulla tabella clientes.
-I trigger è associato a una tabella e viene eseguito automaticamente quando si verifica l'evento.
-Qui creiamo una tabella di audit chiamata log_clientes per registrare le modifiche apportate (datos_nuevos).*/
+/*Los triggers son procedimientos automáticos que se ejecutan en la base de datos como respuesta a eventos específicos.
+Las operaciones que pueden activar un trigger incluyen INSERT, UPDATE o DELETE, y pueden ejecutarse antes o después del evento (BEFORE o AFTER).
+En este caso, creamos un trigger que se activa AFTER una operación de UPDATE sobre la tabla clientes.
+El trigger está asociado a una tabla y se ejecuta automáticamente cuando ocurre el evento.
+Aquí creamos una tabla de auditoría llamada log_clientes para registrar los cambios realizados (datos_nuevos)*/
 
 -- Creacion de la tabla log_clientes
 CREATE TABLE IF NOT EXISTS log_clientes (
@@ -232,25 +232,25 @@ CREATE TRIGGER tr_clientes
 AFTER UPDATE ON clientes
 FOR EACH ROW
 BEGIN
-    -- Verifica se cambia il nome
+    -- Compreba si el nombre cambia
     IF NEW.nombre != OLD.nombre THEN
         INSERT INTO log_clientes (usuario, operacion, datos_antiguos, datos_nuevos)
         VALUES (CURRENT_USER(), 'UPDATE', OLD.nombre, NEW.nombre);
     END IF;
     
-    -- Verifica se cambia il cognome
+    -- Verifica si cambia el apellido
     IF NEW.apellido != OLD.apellido THEN
         INSERT INTO log_clientes (usuario, operacion, datos_antiguos, datos_nuevos)
         VALUES (CURRENT_USER(), 'UPDATE', OLD.apellido, NEW.apellido);
     END IF;
     
-	 -- Verifica se cambia la città
+	 -- Verifica si la cidad cambia
     IF NEW.ciudad != OLD.ciudad THEN
         INSERT INTO log_clientes (usuario, operacion, datos_antiguos, datos_nuevos)
         VALUES (CURRENT_USER(), 'UPDATE', OLD.ciudad, NEW.ciudad);
     END IF;
     
-    -- Verifica se cambia la fecha_registro
+    -- Comprueba si la fecha_registro cambia
     IF NEW.fecha_registro != OLD.fecha_registro THEN
         INSERT INTO log_clientes (usuario, operacion, datos_antiguos, datos_nuevos)
         VALUES (CURRENT_USER(), 'UPDATE', OLD.fecha_registro, NEW.fecha_registro);
@@ -264,11 +264,11 @@ UPDATE clientes SET ciudad = 'Modena' WHERE id = 1;
 --PARTE 4: Planificación de Tareas --
 
 -- 1. Planificación de Copias de Seguridad:--
-/* per piancificare una copia di sicurezza automatica creiamo un file.bat utilizzando mysqldump,
-all'interno del quale creiamo la connessione col il database, una cartella per il file che si genererà
-e il file stesso in .sql */
+/* Para programar una copia de seguridad automática, creamos un archivo .bat utilizando mysqldump,
+dentro del cual se establece la conexión con la base de datos, se crea una carpeta para el archivo que se generará
+y se genera el archivo mismo .sql */
 
-    -- Modificare l'utente e la password
+    -- Modificar el usuario y la contraseña
 @echo Starting BackUp
 
 set MYSQL_BIN="C:\Program Files\MariaDB 5.5\bin\mysqldump.exe"
@@ -289,96 +289,74 @@ set BACKUP_FILE=%DB_NAME%_%DATE:/=-%.sql
 echo Backup completado en %BACKUP_DIR%\%BACKUP_FILE%
 pause
 
-/*Pianificazione automatica con Task Scheduler di Windows:
+/*Planificación automática con el Programador de tareas de Windows:
 
-Cerca "Utilità di pianificazione" nel menu Start
-Crea task:
-Azione → "Crea attività di base"
-Nome: "Backup MySQL giornaliero"
-Trigger: Quotidiano (es. alle 23:00)
-Azione: "Avvia un programma"
-Programma: C:\percorso\backup_mysql.bat
+Busca "Programador de tareas" en el menú de Inicio
+Crear tarea:
+Acción → "Crear tarea básica"
+Nombre: "Copia de seguridad diaria de MySQL"
+Disparador: Diario (por ejemplo, a las 23:00)
+Acción: "Iniciar un programa"
+Programa: C:\ruta\backup_mysql.bat
+Finalizando: "Finalizar".
 */
 
 -- 2. Monitoreo del Rendimiento: --
 
 /*dbeaver
-Performance Dashboard:
-Menu Database > Performance > Dashboard mostra in tempo reale:
-    Query attive
-    Utilizzo CPU/RAM
-    Latenza delle query
-Explain Plan:
-Click destro su una query > Explain Execution Plan per analizzare l'uso degli indici.*/
+Panel de Rendimiento:
+Menú Base de datos > Rendimiento > Panel muestra en tiempo real:
+Consultas activas
+Uso de CPU/RAM
+Latencia de las consultas
+Plan de Ejecución:
+Clic derecho sobre una consulta > Explicar plan de ejecución para analizar el uso de los índices*/
 
 /*HeidiSQL
-Session Manager:
-Menu Tools > Session Manager elenca tutte le connessioni attive con:
-    Tempo di esecuzione
-    Query in corso
-    Stato (Lock, Sending data, etc.)*/
+Seleccionar la conexión deseada
+En la barra superior 
+Seleccionar Procesos*/
 
+    -- La query seria la siguiente:
+    SELECT * 
+    FROM information_schema.processlist;
 
+/*Muestra todas las conexiones activas y las consultas en ejecución, proporcionando todos los detalles e información,
+como por ejemplo, qué usuario está conectado y qué consulta está ejecutando.
+Es una versión más detallada del comando SHOW PROCESSLIST utilizado anteriormente.*/
 SHOW FULL PROCESSLIST;
-/*Mostra tutte le connessioni attive e le query in esecuzione.*/
-SHOW STATUS LIKE 'Threads_connected';
 
-/*Mostra le query in esecuzione da più di 10 secondi.*/
+/*Se puede, tambien, establecer un número máximo de conexiones para optimizar los recursos con el comando*/
+SET GLOBAL max_connections = [numero];
+
+/*Muestra las consultas en ejecución desde hace más de 10 segundos.*/
 SELECT * FROM information_schema.processlist 
 WHERE COMMAND != 'Sleep' AND TIME > 10
 ORDER BY TIME DESC;
 
+/*1. Parte 1: Configuración de MySQL
+Creación de la base de datos y gestión de usuarios:
+Se implementó una estructura con roles bien definidos (consultor, admin_ventas), siguiendo el principio del mínimo privilegio (solo los permisos necesarios).
+La optimización de la consulta con WHERE ciudad = 'Madrid' requirió el uso de índices para evitar escaneos completos de la tabla.
 
+Gestión de procesos:
+El uso de SHOW PROCESSLIST y KILL es esencial para resolver consultas bloqueantes o consultas descontroladas.
 
+2. Parte 2: SQLite para Datos Locales
+La creación de una base de datos ligera (clientes.db) con una tabla bien estructurada.
 
-/* quasi
-DELIMITER //
-CREATE TRIGGER tr_auditoria_clientes
-AFTER UPDATE ON clientes
-FOR EACH ROW
-BEGIN
-    INSERT INTO log_clientes (
-        usuario,
-        operacion,
-        datos_antiguos,
-        datos_nuevos
-    ) VALUES (
-        CURRENT_USER(),
-        'UPDATE',
-        -- Solo los campos clave
-        OLD.nombre,
-        NEW.nombre
-    );
-END//
-DELIMITER ;
-*/
-/*DELIMITER //
-CREATE TRIGGER trg_audit_clientes
-AFTER UPDATE ON clientes
-FOR EACH ROW
-BEGIN
-    INSERT INTO log_clientes (
-		fecha_modificacion, 
-		usuario, 
-		operacion, 
-		datos_antiguos, 
-		datos_nuevos
-	)
-    VALUES (
-        CURRENT_TIMESTAMP,
-        CURRENT_USER(),
-        'UPDATE',
-        NEW.id, 
-		NEW.nombre, 
-		NEW.apellido, 
-		NEW.ciudad, 
-		NEW.fecha_registro
-    );
-END;
-//
-DELIMITER ;
-*/
+3. Parte 3: Automatización y Seguridad
+Respaldo (backup): El script para la copia de la tabla clientes garantiza la recuperación ante desastres.
+Validación de datos: El procedimiento almacenado con control sobre fechas futuras previene errores de integridad.
+Trigger: El script para registra modificaciones, lo cual es crucial para la responsabilidad.
 
+4. Parte 4: Planificación y Monitoreo
+Copias de seguridad automáticas: El uso de scripts .bat (Windows) con el programador de tareas asegura la continuidad.
+
+Herramientas de monitoreo:
+DBeaver / HeidiSQL para análisis visual.
+
+SHOW FULL PROCESSLIST y el registro de consultas lentas para diagnosticar cuellos de botella.*/
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
