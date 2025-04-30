@@ -17,10 +17,6 @@
 -- PARTE 1 --
 
 -- 1. Creación y Configuración de la Base de Datos (MySQL) --
-/* Se procederá con la creación de una base de datos que llamaremos DataSolutionDB con MySQL y, dentro de ella, una tabla clientes.
-Se continuará estableciendo los campos de la tabla con sus respectivos valores y restricciones, 
-definiendo, por ejemplo, el campo 'id' como entero, autoincrementable y como clave primaria.  */
-
 -- Volcando estructura de base de datos para datasolutionsdb
 CREATE DATABASE IF NOT EXISTS `datasolutionsdb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
 USE `datasolutionsdb`;
@@ -35,7 +31,6 @@ CREATE TABLE IF NOT EXISTS `clientes` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-/* Se procede a insertar los datos en la tabla, con los campos completados. */
 
 -- Volcando datos para la tabla datasolutionsdb.clientes: ~10 rows (aproximadamente)
 INSERT INTO `clientes` (`id`, `nombre`, `apellido`, `ciudad`, `fecha_registro`) VALUES
@@ -51,54 +46,37 @@ INSERT INTO `clientes` (`id`, `nombre`, `apellido`, `ciudad`, `fecha_registro`) 
 	(10, 'Uxua', 'Arego', 'Pamplona', '2022-11-03');
 
 -- 2. Creacion de Usuarios: --
-/* A continuación, la creación de dos usuarios con sus respectivos permisos, utilizando los comandos CREATE USER y GRANT:
-        el primero, 'consultor', con permisos de lectura sobre todas las tablas de la base de datos;
-        el segundo, 'admin_venta', con permisos de lectura, inserción y actualización sobre la tabla clientes.
-FLUSH PRIVILEGES se utiliza para actualizar los permisos de los usuarios.*/
 
--- Creacion de los usuarios con diferentes provilegios
+-- Creacion del usuarios consultor
 CREATE USER 'consultor'@'localhost' IDENTIFIED BY '';
 GRANT USAGE ON *.* TO 'consultor'@'localhost';
 GRANT SELECT  ON `datasolutionsdb`.* TO 'consultor'@'localhost';
 FLUSH PRIVILEGES;
-            
+
+-- Creacion del usuario admin_venta         
 CREATE USER 'admin_venta'@'localhost' IDENTIFIED BY '';
 GRANT USAGE ON *.* TO 'admin_venta'@'localhost';
 GRANT SELECT, INSERT, UPDATE  ON TABLE `datasolutionsdb`.`clientes` TO 'admin_venta'@'localhost';
 FLUSH PRIVILEGES;
 
 -- 3. OPTIMIZACION DE CONSULTAS: --
-/*Crear índices es recomendable para optimizar las consultas, especialmente cuando se realizan búsquedas sobre columnas específicas, como en este caso. */
-SELECT * 
-FROM clientes 
-WHERE ciudad = 'Madrid' AND fecha_registro > '2024-01-01';
-
-/* En este caso, creamos índices con el comando CREATE INDEX, definiéndolos como idx_ciudad o idx_fecha en la tabla clientes
-para las columnas ciudad y fecha_registro.
-Aquí una versión optimizada. */
+-- Creacion índices 
 
 CREATE INDEX idx_ciudad_fecha ON clientes (ciudad, fecha_registro);
 
-/* Para optimizar aún más la consulta, podemos usar EXPLAIN para analizar el plan de ejecución de la consulta.
-EXPLAIN proporciona información sobre cómo la base de datos ejecutará la consulta, incluidos los índices utilizados y el número de filas examinadas.*/
-
+-- Optimizacion de las consultas
 EXPLAIN SELECT * 
 FROM clientes 
 WHERE ciudad = 'Madrid' AND fecha_registro > '2024-01-01';
 
-/* Con SHOW PROCESSLIST podemos visualizar los procesos en curso
-y con el comando KILL, indicando su ID, eliminarlos. */
--- Gestion de procesos
+-- Visualizacion y gestion de los procesos
 SHOW PROCESSLIST;
 
 KILL <id_proceso>;
 
 
--- PARTE 2 --
-/* Creacion de una base de datos clientes.db en Sqlite3, con la tabla clientes, con los mismos campos de la tabla clientes de MySQL.
-Con el orden INSERt INTO se insertan los mismos datos. */
-
--- Volcando estructura de base de datos para clientes.db
+-- PARTE 2 Administración de Datos con SQLite --
+-- Volcando estructura de base de datos para clientes.db en Sqlite3
 CREATE DATABASE IF NOT EXISTS clientes.db;
 USE clientes.db;
 
@@ -140,20 +118,16 @@ VALUES (10, 'Uxua', 'Arego', 'Pamplona', '2022-11-03');
 -- Parte 3: Automatización de Tareas y Seguridad --
 
 -- 1. Copias de seguridad --
-/*En esta parte se crea una tabla de backup de clientes, con la misma estructura que la tabla clientes,
-y se inserta una copia de los datos.*/
 
 -- Creacion tabla de backup de clientes
 CREATE TABLE IF NOT EXISTS clientes_backup LIKE clientes;
 INSERT INTO clientes_backup SELECT * FROM clientes;
 
-/* Ademas tramite el comando MYSQLDUMP en el CMD de Windows se pueden crear copias de seguridad de la tabla clientes
-en diferentes formatos (sql, csv) indicando el usuario, el nombre de la base datos, la tabla, la ruta de la carpeta
-y el formado elegido*/
+-- Backup con MYSQLDUMP en el CMD de Windows 
     -- modificar el usuario y el nombre del usuario en la ruta
 mysqldump -u usuario -p DataSolutionsDB clientes > C:/Users/NombreUsuario/Downloads/clientes_backup.sql
 
-/* Aqui el codigo de un fichero .bat para crear un backup automatico de la tabla clientes en formato sql*/
+-- Fichero .bat para crear un backup automatico
     -- Modificar User, password y UserName en Path
 @echo off
 :: === Configura tus datos aquí ===
@@ -172,14 +146,13 @@ echo Backup completado! El file si encuentra in Downloads.
 
 pause
 
--- Creacion de un backup de clientes en formato csv en la carpeta C:\Program Files\MariaDB 11.6\data\datasolutionsdb
+-- Creacion de un backup de datos de la tabla clientes en formato csv
 SELECT * FROM clientes INTO OUTFILE 'clientes_backup.csv'
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';
 
 
 -- 2. Procedimientos almacenados --
-/* En esta parte se crea un procedimiento almacenado que valide la integridad de los datos al insertar un nuevo cliente en la tabla clientes de MySQL.
- Este procedimiento verifica que el campo fecha_registro no sea una fecha futura.*/
+-- Al insertar un nuevo cliente verifica que el campo fecha_registro no sea una fecha futura.
 
 -- Creacion del procedimiento almacenado
 DELIMITER //
@@ -209,11 +182,7 @@ SELECT @mensaje; -- Verifica si hubo error o éxito
 
 
 -- 3. Disparador (Trigger)  --
-/*Los triggers son procedimientos automáticos que se ejecutan en la base de datos como respuesta a eventos específicos.
-Las operaciones que pueden activar un trigger incluyen INSERT, UPDATE o DELETE, y pueden ejecutarse antes o después del evento (BEFORE o AFTER).
-En este caso, creamos un trigger que se activa AFTER una operación de UPDATE sobre la tabla clientes.
-El trigger está asociado a una tabla y se ejecuta automáticamente cuando ocurre el evento.
-Aquí creamos una tabla de auditoría llamada log_clientes para registrar los cambios realizados (datos_nuevos)*/
+-- Trigger para registrar los cambios realizados (datos_nuevos)*/
 
 -- Creacion de la tabla log_clientes
 CREATE TABLE IF NOT EXISTS log_clientes (
@@ -264,9 +233,7 @@ UPDATE clientes SET ciudad = 'Modena' WHERE id = 1;
 --PARTE 4: Planificación de Tareas --
 
 -- 1. Planificación de Copias de Seguridad:--
-/* Para programar una copia de seguridad automática, creamos un archivo .bat utilizando mysqldump,
-dentro del cual se establece la conexión con la base de datos, se crea una carpeta para el archivo que se generará
-y se genera el archivo mismo .sql */
+-- Creacion de un archivo .bat utilizando mysqldump para realizar copias de seguridad automáticas de la base de datos.
 
     -- Modificar el usuario y la contraseña
 @echo Starting BackUp
@@ -303,60 +270,21 @@ Finalizando: "Finalizar".
 
 -- 2. Monitoreo del Rendimiento: --
 
-/*dbeaver
-Panel de Rendimiento:
-Menú Base de datos > Rendimiento > Panel muestra en tiempo real:
-Consultas activas
-Uso de CPU/RAM
-Latencia de las consultas
-Plan de Ejecución:
-Clic derecho sobre una consulta > Explicar plan de ejecución para analizar el uso de los índices*/
-
-/*HeidiSQL
-Seleccionar la conexión deseada
-En la barra superior 
-Seleccionar Procesos*/
-
-    -- La query seria la siguiente:
+-- Query para ver las conexiones activas y las consultas en ejecución
     SELECT * 
     FROM information_schema.processlist;
 
-/*Muestra todas las conexiones activas y las consultas en ejecución, proporcionando todos los detalles e información,
-como por ejemplo, qué usuario está conectado y qué consulta está ejecutando.
-Es una versión más detallada del comando SHOW PROCESSLIST utilizado anteriormente.*/
+-- Comando para ver los proces activos
 SHOW FULL PROCESSLIST;
 
-/*Se puede, tambien, establecer un número máximo de conexiones para optimizar los recursos con el comando*/
+-- Establecer un número máximo de conexiones para optimizar los recursos
 SET GLOBAL max_connections = [numero];
 
-/*Muestra las consultas en ejecución desde hace más de 10 segundos.*/
+-- Mostrar las consultas en ejecución desde hace más de 10 segundos.
 SELECT * FROM information_schema.processlist 
 WHERE COMMAND != 'Sleep' AND TIME > 10
 ORDER BY TIME DESC;
 
-/*1. Parte 1: Configuración de MySQL
-Creación de la base de datos y gestión de usuarios:
-Se implementó una estructura con roles bien definidos (consultor, admin_ventas), siguiendo el principio del mínimo privilegio (solo los permisos necesarios).
-La optimización de la consulta con WHERE ciudad = 'Madrid' requirió el uso de índices para evitar escaneos completos de la tabla.
-
-Gestión de procesos:
-El uso de SHOW PROCESSLIST y KILL es esencial para resolver consultas bloqueantes o consultas descontroladas.
-
-2. Parte 2: SQLite para Datos Locales
-La creación de una base de datos ligera (clientes.db) con una tabla bien estructurada.
-
-3. Parte 3: Automatización y Seguridad
-Respaldo (backup): El script para la copia de la tabla clientes garantiza la recuperación ante desastres.
-Validación de datos: El procedimiento almacenado con control sobre fechas futuras previene errores de integridad.
-Trigger: El script para registra modificaciones, lo cual es crucial para la responsabilidad.
-
-4. Parte 4: Planificación y Monitoreo
-Copias de seguridad automáticas: El uso de scripts .bat (Windows) con el programador de tareas asegura la continuidad.
-
-Herramientas de monitoreo:
-DBeaver / HeidiSQL para análisis visual.
-
-SHOW FULL PROCESSLIST y el registro de consultas lentas para diagnosticar cuellos de botella.*/
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
