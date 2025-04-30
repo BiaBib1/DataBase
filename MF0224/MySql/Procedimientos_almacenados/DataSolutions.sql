@@ -18,7 +18,7 @@
 
 -- 1. Creación y Configuración de la Base de Datos (MySQL) --
 -- Volcando estructura de base de datos para datasolutionsdb
-CREATE DATABASE IF NOT EXISTS `datasolutionsdb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_uca1400_ai_ci */;
+CREATE DATABASE IF NOT EXISTS `datasolutionsdb`;
 USE `datasolutionsdb`;
 
 -- Volcando estructura para tabla datasolutionsdb.clientes
