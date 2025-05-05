@@ -15,42 +15,8 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
--- PARTE 1. Diseño de la Base de Datos
--- Elige MySQL o SQLite como el SGBD.
-/* Se ha optado por MySQL como SGBD para la base de datos por las siguientes razones:
-  - MySQL admite múltiples usuarios con un sistema de privilegios avanzado, mientras que SQLite no cuenta con un sistema de usuarios, siendo una base de datos de archivo único sin autenticación integrada.
-  - MySQL permite el uso de triggers complejos, mientras que SQLite tiene triggers más limitados y no soporta procedimientos almacenados.
-  - Mysqldump permite realizar copias de seguridad estructuradas con un simple comando, mientras que SQLite requiere copias manuales del archivo .sqlite, por lo tanto MySQL se puede automatizar fácilmente.
-  - Una base de datos real podría crecer con la adición de nuevas tablas (por ejemplo, Editores, Promociones) y el aumento de pedidos, MySQL soporta grandes volúmenes de datos a diferencia de SQLite.
-*/
-
--- 2. Diseña un esquema de base de datos
-
--- 3. Explicación de las decisiones de diseño: 
-/* La base de datos es un sistema de gestión de ventas de libros, que incluye las tablas clientes, libros, pedidos e items_pedido.
-La tabla clientes almacena la información de los clientes, incluyendo su nombre (VARCHAR), apellido (VARCHAR), email (VARCHAR) y teléfono (INT).
-La tabla libros almacena información sobre los libros, incluyendo su título (VARCHAR), autor (VARCHAR), género (VARCHAR), precio (FLOAT) y cantidad en stock (INT).
-La tabla pedidos almacena información sobre los pedidos realizados por los clientes, incluyendo el id del cliente (INT), la fecha del pedido (DATE) y el monto total (FLOAT).
-La tabla items_pedido almacena información sobre los libros incluidos en cada pedido, incluyendo el id del libro (INT), la cantidad (INT) y el precio por ítem (FLOAT).
-
-Las relaciones entre las tablas son las siguientes:
-- Un cliente puede realizar múltiples pedidos, pero un pedido pertenece a un solo cliente (1:N).
-- Un pedido puede incluir múltiples libros, y un libro puede estar en múltiples pedidos (N:M).
-- La tabla items_pedido actúa como tabla intermedia para gestionar la relación entre pedidos y libros.
-- La tabla pedidos tiene una relación de 1:N con la tabla items_pedido, ya que un pedido puede incluir múltiples ítems.
-- La tabla libros tiene una relación de 1:N con la tabla items_pedido, ya que un libro puede estar en múltiples pedidos.
-
-Se han creado índices para optimizar las consultas, especialmente en los campos que se utilizan con frecuencia en búsquedas y uniones.
-- Se han creado índices en los campos id_cliente, fecha_pedido, id_libro y título para mejorar el rendimiento de las consultas.
-- Se ha creado un índice único en el campo teléfono de la tabla clientes para garantizar que no haya duplicados y mejorar la búsqueda por número. */
-
-
 -- PARTE 2. e 3. Creación de la Base de Datos y Gestión de Usuarios
-
 -- 1. Creación de la base de datos, tablas y datos.
-/* Siguiendo el diseño de la base de datos previamente explicado, se procede con la creación de las diferentes tablas necesarias.
-Primero la tabla 'clientes' seguida de la inserción de sus datos, luego 'libros' con 11 filas de datos, 'pedidos' también con datos
-al igual que la tabla 'items_pedido'. */
 
 -- Volcando estructura de base de datos para bookstore
 CREATE DATABASE IF NOT EXISTS `bookstore`; 
@@ -81,7 +47,6 @@ VALUES
 	(8, 'Lorea', 'Nazabal', 'lorea.nazabal@g.com', 666221777),
 	(9, 'Idoia', 'Gurmendi', 'idoia.gurmendi@g.com', 666121554),
 	(10, 'Uxua', 'Arego', 'uxua.arego@g.com', 666123444);
-
 
 -- Volcando estructura para tabla bookstore.libros
 CREATE TABLE IF NOT EXISTS `libros` (
@@ -182,9 +147,6 @@ GRANT SELECT ON bookshop.items_pedido TO 'agente_ventas'@'localhost';
 
 -- 1. Crear un procedimiento almacenado para gestión de Inventario: 
 -- Actualizar automáticamente la cantidad_en_stock en la tabla libros cuando se realiza un nuevo pedido.
-/* Al activarse, el procedimiento almacenado insertará en la tabla pedidos el nuevo pedido, registrando la fecha actual gracias a CURDATE
-y calculando el monto total multiplicando la cantidad por el precio del libro individual.
-Luego procederá a insertar en la tabla items_pedido los valores del nuevo pedido y actualizará la cantidad_en_stock en la tabla libros. */
 
 DELIMITER //
 
@@ -196,15 +158,15 @@ CREATE PROCEDURE realizar_pedido(
   IN pprecio DECIMAL(10,2)
 )
 BEGIN
-  -- Inserisce il nuovo ordine (semplificato)
+  -- Inserta el nuevo pedido (simplificado
   INSERT INTO pedidos (id_pedido, id_cliente, fecha_pedido, monto_total)
   VALUES (pid_pedido, pid_cliente, CURDATE(), pcantidad * pprecio);
 
-  -- Inserisce l'item
+  -- Inserta el artículo
   INSERT INTO items_pedido (id_pedido, id_libro, cantidad, precio_por_item)
   VALUES (pid_pedido, pid_libro, pcantidad, pprecio);
 
-  -- Aggiorna lo stock
+  -- Actualiza el inventario
   UPDATE libros
   SET cantidad_en_stock = cantidad_en_stock - pcantidad
   WHERE id_libro = pid_libro;
@@ -214,18 +176,11 @@ END;
 DELIMITER ;
 
 -- Ejecutar el procedimiento para un nuevo pedido
-/* con la función CALL en la que insertamos id_pedido, id_cliente, id_libro, cantidad y una SELECT para calcular el precio del monto_total.
-Elegimos el 1001 como id_pedido para diferenciarlo de los pedidos ya insertados anteriormente,
-y suponemos que la clienta Ana Garcia desea 3 copias del libro "Canne al Vento", cuyo precio se identifica mediante
-una SELECT en la tabla libros donde el id del libro corresponde al del pedido. */
 
 CALL realizar_pedido(1001, 1, 2, 3, (SELECT precio FROM libros WHERE id_libro = 2));
 
 -- 2. Informes de Ventas:
 -- Generar un trigger para el informe diario de ventas que resuma el monto total de ventas por género.
-/* Primero se procede a crear una tabla que pueda almacenar los informes de ventas,
-luego procedemos con la creación del TRIGGER report_ventas que realizará, después de un INSERT en la tabla pedidos,
-un INSERT en la nueva tabla report_ventas_diaria con el total de ventas y la suma de los pedidos divididos por género. */
 
 -- Crear tabla para almacenar el informe diario de ventas
 CREATE TABLE report_ventas_diarias (
@@ -278,17 +233,13 @@ FROM report_ventas_diarias;
 
 -- 3. Respaldo y Recuperación: 
 -- Implementar un script para respaldar la base de datos a un archivo.
-/* Para la copia de seguridad se ha optado por utilizar un archivo batch de Windows,
-que ejecuta `mysqldump` para realizar el respaldo de la base de datos "bookstore" y lo guarda en una carpeta de respaldo.
-La carpeta se crea si no existe ya, y el archivo de respaldo se nombra con la fecha actual.
-Para ejecutar el archivo, es suficiente copiar el script en un bloc de notas y guardarlo con extensión .bat,
-luego ejecutarlo. */
-
+	
+	-- Modificar el usuario y la contraseña
 @echo Starting BackUp
 
 set MYSQL_BIN="C:\Program Files\MariaDB 5.5\bin\mysqldump.exe"
-set DB_USER=root
-set DB_PASS=0000
+set DB_USER=User
+set DB_PASS=****
 set DB_NAME=BookStore
 set BACKUP_DIR="C:\BackupMySQL"
 
@@ -307,12 +258,6 @@ pause
 -- PARTE 5. Indexes y optimización de consultas
 
 -- 1. Creacion de una cosnulta compleja:
-/* Aquí una consulta compleja que recupera datos de múltiples tablas listando todos los clientes 
-que han realizado pedidos de libros del género 'Narrativa' en el último mes.
-La función CONCAT agrupa bajo el alias Cliente el nombre y apellido de cada cliente,
-la fecha_pedido nos permite verificar que se trate de datos del mes actual,
-uniendo la tabla items_pedido y libros es posible obtener también los títulos de los libros y la cantidad de ejemplares
-vendidos del género 'Narrativa' */
 
 SELECT p.fecha_pedido, 
 concat(c.id_cliente, '. ', c.nombre, ' ', c.apellido) AS Cliente, 
@@ -325,10 +270,6 @@ WHERE l.genero = 'Narrativa'
 AND p.fecha_pedido >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH);
 
 -- 2. Optimizacion consulta para analizar el plan de ejecución
-/* La consulta anterior ha sido optimizada para mejorar su rendimiento y acelerar la ejecución.
-En este caso se ha optado por utilizar un JOIN entre las tablas clientes, pedidos, items_pedido y libros.
-Con la función EXPLAIN es posible analizar el plan de ejecución de la consulta
-y verificar si la optimización ha sido exitosa. */
 
 EXPLAIN SELECT p.fecha_pedido, 
 concat(c.id_cliente, '. ', c.nombre, ' ', c.apellido) AS Cliente, 
@@ -341,12 +282,6 @@ WHERE l.genero = 'Narrativa'
 AND p.fecha_pedido >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH);
 
 -- 3. Creacion de indices como tecnica de optimización para mejorar el rendimiento de la consulta
-/* Además, para acelerar la consulta anterior, se prefirió indexar los campos utilizados en la SELECT,
-es decir, la fecha_pedido para verificar que correspondiera al mes correcto y los títulos de los libros.
-También se añadió un índice adicional para el campo 'telefono', ya que es una clave única en la tabla clientes.
-En el supuesto de un pedido realizado por teléfono, sería más rápido obtener los datos de los pedidos
-a través del propio número. */
-
 
 CREATE INDEX idx_pedidos_fecha ON pedidos(fecha_pedido);
 CREATE INDEX idx_libros_autor ON libros(titulo);
@@ -356,21 +291,14 @@ CREATE INDEX idx_clientes_telefono ON clientes(telefono);
 -- PARTE 6. Planificación de Tareas Administrativa
 
 -- 1. Programacion de una tarea para realizar copias de seguridad
-/* Para la planificación de las actividades administrativas se ha elegido utilizar el Programador de tareas de Windows,
-que permite ejecutar automáticamente el archivo .bat creado previamente para la copia de seguridad de la base de datos.
-A continuación, el script de copia de seguridad diaria para MariaDB/MySQL, que ejecuta mysqldump para hacer una copia de seguridad de la base de datos "bookstore"
-creando la conexión con el usuario y la contraseña correspondientes.
-El archivo .sql generado se guarda en una carpeta de respaldo, creada si no existe, y se nombra con la fecha actual.
-Además, el archivo .bat se encarga de eliminar los archivos de respaldo más antiguos de 30 días,
-para evitar ocupar demasiado espacio. */
 
   -- Modificar el usuario y la contraseña
 @echo off
 :: Script di backup diario per MariaDB/MySQL - BookShop
 
-:: Configurazione
-set DB_USER=root
-set DB_PASSWORD=0000
+:: Configuración
+set DB_USER=User
+set DB_PASSWORD=****
 set DB_NAME=BookStore
 set BACKUP_DIR=C:\BackupDB
 set MYSQL_BIN="C:\Program Files\MariaDB 5.5\bin\mysqldump.exe"
@@ -387,51 +315,10 @@ set BACKUP_FILE=%DB_NAME%_%DATE:/=-%.sql
 :: Elimina backup mas viejos de 30 dias
 forfiles /p "%BACKUP_DIR%" /m BookShop_Backup_*.sql /d -30 /c "cmd /c del @file"
 
-echo Backup completato: %BACKUP_FILE%
+echo Backup completado: %BACKUP_FILE%
 pause
 
-/*Planificación automática con el Programador de tareas de Windows:
 
-    Busca "Programador de tareas" en el menú de Inicio
-    Crear tarea:
-    Acción → "Crear tarea básica"
-    Nombre: "Copia de seguridad diaria de MySQL"
-    Disparador: Diario (por ejemplo, a las 23:00)
-    Acción: "Iniciar un programa"
-    Programa: C:\ruta\backup_mysql.bat
-    Finalizando: "Finalizar".
-*/
-
--- 2. Explicacion de la importancia de la planificación de tareas administrativa
-/* La planificación de las actividades administrativas es un aspecto fundamental en la gestión de una base de datos.
-Automatizar operaciones como las copias de seguridad garantiza que el sistema se mantenga estable, seguro y eficiente a lo largo del tiempo.
-Una copia de seguridad estructurada (con la fecha en el nombre del archivo, como en tu caso) permite restaurar rápidamente
-el estado anterior de la base de datos en caso de accidentes de hardware, errores humanos, ataques informáticos o corrupción de datos
-que puedan causar pérdidas irreversibles. Además, mysqldump es la herramienta más común para exportar datos de manera estructurada. */
-
-/*Realización de una base de datos completa para una librería (BookShop), utilizando MySQL como sistema de gestión, con una estructura bien organizada y funcionalidades avanzadas.
-Puntos Clave Desarrollados:
-
-Diseño de la Base de Datos
-Creación de tablas bien estructuradas (Libros, Clientes, Pedidos, Items_Pedido).
-Elección de claves primarias/foráneas para garantizar la integridad referencial.
-Uso de tipos de datos apropiados (DECIMAL para precios, INT para ID, VARCHAR para texto).
-
-Gestión de Usuarios y Permisos
-Diferenciación de roles (Gerente vs AgenteVentas) con privilegios específicos.
-Asignación de permisos granulares (por ejemplo, solo lectura en Libros, pero modificación en Pedidos).
-
-Automatización con Scripts y Triggers
-Procedimientos almacenados para actualizar automáticamente el stock (cantidad_en_stock).
-Triggers para generar reportes diarios (ventas por género).
-Scripts de copia de seguridad programados (a través de .bat).
-
-Optimización de Consultas (UF1470)
-Uso de EXPLAIN para analizar el rendimiento.
-Creación de índices en campos críticos (género, fecha_pedido).
-
-Planificación de Actividades (UF1468)
-Copias de seguridad automatizadas a través del Programador de Tareas de Windows.*/
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
