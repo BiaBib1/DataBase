@@ -1,0 +1,254 @@
+-- --------------------------------------------------------
+-- Host:                         Bianca Razzoli
+-- Versión del servidor:         MP0225
+-- SO del servidor:              UF1471
+-- Data Base				  Distribuida
+-- Lenguajes de Programación:    MariaDB
+-- Versiones:				  MariaDB-11.6.2 		
+-- Documentación Práctica: 	  Creación de una Base de Datos Distribuida con MariaDB en Red WiFi				
+-- --------------------------------------------------------
+
+
+-- 1. Objetivo General
+/*El objetivo de esta práctica es diseñar e implementar una base de datos distribuida utilizando MariaDB en un entorno de red local (WiFi),
+con múltiples nodos que representan departamentos distintos de una pequeña empresa.
+
+    La independencia de nodos en una arquitectura distribuida
+    El acceso y consulta entre diferentes bases de datos
+    La configuración de replicación básica
+    El uso del motor FEDERATED para acceder a datos remotos*/
+
+-- 2. Infraestructura de Red
+/*Se simula una red WiFi local con el rango IP 192.168.1.100, en la que participan tres nodos con las siguientes direcciones:
+
+Departamento	IP	        Rol
+Ventas	    192.168.100.101	Nodo con BD Ventas
+Inventario	192.168.100.102	Nodo con BD Inventario
+Personal	192.168.100.103	Nodo con BD Personal
+*/
+
+-- 3. Configuración Inicial de los Nodos
+--Cada nodo crea su propia base de datos, tablas independientes y datos:
+
+-- Nodo 1 (Ventas - 192.168.100.101)
+
+CREATE DATABASE ventas;
+USE ventas;
+CREATE TABLE clientes (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(50),
+    email VARCHAR(50)
+);
+
+INSERT INTO clientes VALUES 
+(1, 'Juan Pérez', 'juan@empresa.com'),
+(2, 'María García', 'maria@empresa.com');
+
+-- Nodo 2 (Inventario - 192.168.100.102)
+
+CREATE DATABASE inventario;
+USE inventario;
+CREATE TABLE productos (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(50),
+    stock INT,
+    precio DECIMAL(10,2)
+);
+
+INSERT INTO productos VALUES 
+(1, 'Laptop', 15, 1200.00),
+(2, 'Mouse', 50, 25.50);
+
+-- Nodo 3 (Personal - 192.168.100.103)
+
+CREATE DATABASE personal;
+USE personal;
+CREATE TABLE empleados (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(50),
+    departamento VARCHAR(50),
+    salario DECIMAL(10,2)
+);
+
+INSERT INTO empleados VALUES 
+(1, 'Carlos Ruiz', 'Ventas', 2500.00),
+(2, 'Ana López', 'Inventario', 2300.00);
+
+-- 4. Creación de Usuarios y Permisos Remotos
+/* Se crea un usuario común con acceso desde cualquier IP del rango local:
+Este usuario tendrá privilegios de lectura y escritura en todas las bases de datos, permitiendo la replicación y acceso entre nodos.
+*/
+-- En cada nodo, ejecutar:
+CREATE USER 'admin_distribuido'@'192.168.100.%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON *.* TO 'admin_distribuido'@'192.168.100.%';
+FLUSH PRIVILEGES;
+
+/* Además, se debe configurar el archivo my.ini en la carpeta de MariaDB para permitir replicación y conexiones remotas:
+En cada nodo, editar el archivo para incluir las siguientes líneas: 
+*/
+
+[mysqld]
+server-id = 1  # Cambiar el número de server-id en cada nodo (1, 2, 3)
+relay-log = /var/log/mysql/mysql-relay-bin.log
+replicate_do_db = ventas  # Ajustar según el nodo
+
+/*Para que funcione correctamente la replicación entre varios nodos y también se permitan conexiones remotas, es necesario hacer una pequeña 
+configuración en el archivo my.ini que se encuentra en la carpeta de MariaDB en cada uno de los servidores o nodos.
+En concreto, se deben añadir algunas líneas dentro de la sección [mysqld] del archivo de configuración. Estas líneas indican al servidor 
+cómo comportarse en un entorno de replicación:
+- server-id = 1: esta línea asigna un identificador único al servidor. Es muy importante que cada nodo tenga un número diferente 
+(por ejemplo, el nodo 1 tendrá server-id = 1, el nodo 2 server-id = 2, y así sucesivamente), ya que este valor es lo que permite distinguirlos 
+dentro del sistema de replicación.
+- relay-log = /var/log/mysql/mysql-relay-bin.log: esta línea define la ruta donde se almacenarán los archivos de log de relay, 
+que son usados para replicar los cambios desde el nodo maestro al esclavo. Este archivo actúa como intermediario en la transferencia de datos.
+- replicate_do_db = ventas: esta instrucción le dice al servidor que solo replique una base de datos en particular —en este caso, 
+la base de datos llamada ventas. Si cada nodo trabaja con bases de datos diferentes, este valor puede cambiar dependiendo del nodo.
+
+Esta configuración asegura que cada nodo tenga una identidad clara, sepa qué base de datos debe replicar y esté preparado para recibir 
+o enviar cambios a otros servidores en la red. Una vez configurado, es necesario reiniciar el servicio de MariaDB para que los cambios tengan efecto. */
+
+-- 5. Habilitación del Motor FEDERATED
+-- Este motor permite crear tablas espejo que apuntan a otras bases de datos remotas:
+
+INSTALL SONAME 'ha_federated';
+
+/*La instrucción INSTALL SONAME 'ha_federated'; se utiliza en MySQL para habilitar el módulo FEDERATED, que es un tipo de motor de almacenamiento. 
+Este motor permite que una tabla en una base de datos MySQL acceda a datos que realmente se encuentran en otra base de datos MySQL, 
+incluso si está alojada en otro servidor. */
+/* Para verificar que el motor FEDERATED está habilitado, se puede ejecutar: */ 
+SHOW ENGINES;
+/* Esto mostrará una lista de motores de almacenamiento disponibles y su estado.*/
+
+
+-- 6. Creación de Tablas Federadas (Distribución de Datos)
+-- En Nodo 1 (Ventas): conexión al nodo de Personal (Nodo 3)
+
+USE ventas;
+CREATE TABLE empleados_remotos (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(50),
+    departamento VARCHAR(50),
+    salario DECIMAL(10,2)
+) ENGINE=FEDERATED 
+CONNECTION='mysql://admin_distribuido:password@192.168.100.103:3306/personal/empleados';
+
+-- En Nodo 2 (Inventario): conexión al nodo de Ventas (Nodo 1)
+
+USE inventario;
+CREATE TABLE clientes (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(50),
+    email VARCHAR(50)
+) ENGINE=FEDERATED 
+CONNECTION='mysql://admin_distribuido:password@192.168.100.101:3306/ventas/clientes';
+
+-- En Nodo 3 (Personal): conexión al nodo de Inventario (Nodo 2)
+
+USE personal;
+CREATE TABLE productos (
+    id INT PRIMARY KEY,
+    nombre VARCHAR(50),
+    stock INT,
+    precio DECIMAL(10,2)
+) ENGINE=FEDERATED 
+CONNECTION='mysql://admin_distribuido:password@192.168.100.102:3306/inventario/productos';
+/* Creando las otras tablas faltantes por cada nodo siguiendo el mimo procedimiento, 
+se podrà acceder a los datos de cada ordenador desde cualquier otro nodo. */
+
+-- 7. Consultas Distribuidas
+-- Ahora que tenemos las tablas federadas, podemos realizar consultas distribuidas entre los nodos.
+
+-- Query 1: Listar cada cliente combinado con todos los productos
+SELECT c.nombre AS cliente, p.nombre AS producto
+FROM clientes c
+JOIN productos_remotos p ON 1=1;
+
+/* Análisis: Se combinan todos los clientes con todos los productos disponibles en el nodo remoto de Inventario. */
+
+-- Query 2: Listar los productos y sus responsables de inventario
+SELECT p.nombre AS producto, p.precio, e.nombre AS responsable
+FROM productos_remotos p  -- Datos Nodo 2 (Inventario)
+JOIN empleados_remotos e  -- Datos Nodo 3 (Personal)
+ON e.departamento = 'Inventario'
+WHERE p.stock > 0;
+
+producto   | precio | responsable
+-----------+--------+-------------
+Laptop     | 1200.00| Ana López
+Mouse      | 25.50  | Ana López
+
+/* Analisis: Se recuperan los productos con stock disponible desde el Nodo 2.
+A continuación, se añade el nombre del empleado que pertenece al departamento de "Inventario", ubicado en el Nodo 3.
+Para ello, se utiliza un JOIN sencillo basado en una condición fija, donde el valor del campo departamento sea igual a 'Inventario'. */
+
+-- 8. Inserción de Datos en Tablas Federadas
+/*Una de las ventajas fundamentales de utilizar el motor FEDERATED es la capacidad no solo de consultar datos remotos, 
+sino también de insertarlos, actualizarlos o eliminarlos, como si estuvieran localmente disponibles.
+Para insertar datos en una tabla federada, simplemente se utiliza la instrucción INSERT como si fuera una tabla local.
+Insertar un nuevo cliente desde otro nodo por ejemplo Inventario (192.168.1.102) donde tenemos una tabla federada clientes
+que apunta al nodo Ventas.
+Esta instrucción insertará un nuevo registro en la tabla clientes que realmente reside en el nodo de Ventas (192.168.1.101).*/
+
+USE inventario;
+INSERT INTO clientes (id, nombre, email) VALUES
+(3, 'Laura Torres', 'laura@empresa.com');
+
+
+/*Verificación del Insert
+Para verificar que el dato fue realmente insertado en el servidor de Ventas, desde el nodo Ventas podemos ejecutar:*/
+
+USE ventas;
+SELECT * FROM clientes;
+
++----+--------------+---------------------+
+| id | nombre       | email               |
++----+--------------+---------------------+
+| 1  | Juan Pérez   | juan@empresa.com    |
+| 2  | María García | maria@empresa.com   |
+| 3  | Laura Torres | laura@empresa.com   |
++----+--------------+---------------------+
+
+-- Análisis Técnico
+/* El motor FEDERATED actúa como un conector SQL en tiempo real: al ejecutar un INSERT, la instrucción es transmitida directamente al nodo remoto.
+No se almacena ninguna copia local de los datos: lo que se ve o modifica se hace directamente sobre la base remota.
+Es importante que el usuario admin_distribuido tenga privilegios de escritura (INSERT, UPDATE, DELETE) en el servidor remoto, 
+de lo contrario la operación fallará. */
+
+-- Conclusión del Punto
+/* Este ejemplo demuestra que un sistema distribuido no solo permite leer datos remotos, sino también mantenerlos actualizados. 
+Esto permite una colaboración real entre departamentos, en donde cada uno puede insertar información en las bases de datos de otros nodos, 
+respetando la autonomía y manteniendo una sincronización lógica y organizada entre todos los componentes del sistema. */
+
+-- Guardar los logs de la base de datos
+/* Es posible guardar los logs de la base de datos en un archivo para averiguar los accesos de cada usuario,
+los errores y las consultas lentas que se ejecutan en la base de datos, asì se puede monitorear el rendimiento y la actividad del servidor. */
+[mysqld]
+# Logging
+general_log = 1
+general_log_file = C:/mariadb_logs/general.log
+
+slow_query_log = 1
+slow_query_log_file = C:/mariadb_logs/slow.log
+long_query_time = 2
+
+log_error = C:/mariadb_logs/error.log
+
+/* Se recomienda crear una carpeta llamada mariadb_logs en la raíz de C: para almacenar los logs generados por el servidor.
+Esto es útil para el monitoreo y la depuración de problemas.
+En esta manera se pueden revisar los logs de consultas lentas, errores y el log general de todas las consultas ejecutadas en el servidor, 
+monitorando así el rendimiento y la actividad del servidor de bases de datos. */
+
+/*
+general_log = 1	Activa el log general, que guarda todas las consultas (útil para auditorías o depuración)
+general_log_file = ...	Define dónde se guardará ese archivo de log
+slow_query_log = 1	Activa el log de consultas lentas, para detectar posibles cuellos de botella
+slow_query_log_file = ...	Define el archivo donde se guardarán esas consultas lentas
+long_query_time = 1	Considera "lenta" cualquier consulta que tarde más de 1 segundo en ejecutarse
+*/
+
+-- 9. Conclusión
+/*Con esta práctica se ha logrado:
+    Implementar una arquitectura distribuida en red local con MariaDB
+    Configurar usuarios, permisos y motores de almacenamiento apropiados
+    Conectar bases de datos entre diferentes nodos mediante FEDERATED
+    Realizar consultas distribuidas con datos remotos */
